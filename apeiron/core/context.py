@@ -2,17 +2,19 @@
 
 import pygame
 
-from . import trans
 from .state import State, StateManager
+from .gameclock import GameClock
+
+pygame.init()
 
 def call_func(obj, name, *a, **k):
-    if obj:
-        return getattr(obj, name, lambda *a, **k: None)(*a, **k)
+    return getattr(obj, name, lambda *a, **k: None)(*a, **k)
 
 class ContextBuilder:
     def __init__(self, title, width, height):
         self.config = {
             'fps'       : 0,
+            'step'      : 60,
             'icon'      : None,
             'show_mouse': True,
             'title'     : title,
@@ -40,19 +42,21 @@ class Context:
         self.state_manager = StateManager()
 
     def configure_ctx(self):
-        pygame.init()
-
         pygame.event.set_grab(self.config['grab_mouse'])
         pygame.mouse.set_visible(self.config['show_mouse'])
         pygame.display.set_caption(self.config['title'])
 
-        self.clock  = pygame.time.Clock()
-        self.flags  = pygame.RESIZABLE  *  self.config['resizable'] | \
-                      pygame.FULLSCREEN * self.config['fullscreen']
-        self.screen = pygame.display.set_mode(self.config['size'], self.flags)
+        self.clock  = GameClock(
+            max_fps = self.config['fps'],
+            max_ups = self.config['step'],
+            frame_callback  = lambda ip: call_func(self.state_manager.state, 'draw', self, ip),
+            update_callback = lambda dt: call_func(self.state_manager.state, 'update', self, dt))
 
-        if self.config['icon']:
-            pygame.display.set_icon(self.config['icon'])
+        self.screen = pygame.display.set_mode(
+            self.config['size'],
+            pygame.RESIZABLE  *  self.config['resizable'] | \
+            pygame.FULLSCREEN * self.config['fullscreen'])
+        pygame.display.set_icon(self.config['icon'] or pygame.Surface((1, 1)))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -76,10 +80,8 @@ class Context:
         self.state_manager.push(initial_state(self))
 
         while self.state_manager.state:
+            self.clock.tick()
             self.handle_events()
-            call_func(self.state_manager.state, 'draw')
-            call_func(self.state_manager.state, 'update')
-            self.clock.tick(self.config['fps'])
             pygame.display.flip()
 
         exit(pygame.quit() or 0)
