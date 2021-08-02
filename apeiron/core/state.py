@@ -2,8 +2,7 @@
 
 functions = [
     'draw', 'update', 'on_start',
-    'on_stop', 'on_pause', 'on_resume'
-]
+    'on_stop', 'on_pause', 'on_resume']
 
 class State:
     def __init__(self, ctx):
