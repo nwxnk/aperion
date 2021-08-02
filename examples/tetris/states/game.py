@@ -11,8 +11,10 @@ from tetris import states
 from tetris.logic import Shape
 from tetris.logic import Board
 
-kevent = (pygame.event.custom_type(), 1000 // 15) #   key event
-bevent = (pygame.event.custom_type(), 1000 // 5 ) # board event
+pygame.freetype.init()
+
+kevent = [pygame.event.custom_type(), 15] #   key event
+bevent = [pygame.event.custom_type(), 5 ] # board event
 
 colors = [
     (240,   0,   3), # ZShape
@@ -26,8 +28,7 @@ colors = [
 
 class Game(State):
     def on_start(self):
-        pygame.freetype.init()
-        pygame.time.set_timer(*bevent)
+        pygame.time.set_timer(bevent[0], 1000 // bevent[1])
 
         self.block = pygame.Rect(200, 20, 20, 20)
         self.ctx.board = Board()
@@ -42,7 +43,7 @@ class Game(State):
         self.ctx.paused = True
 
     def on_resume(self):
-        pygame.time.set_timer(*bevent)
+        pygame.time.set_timer(bevent[0], 1000 // bevent[1])
         self.ctx.paused = False
 
     def handle_quit_event(self, event):
@@ -99,34 +100,34 @@ class Game(State):
             self.ctx.board.move(shape, shape.x + dx, shape.y + dy)
 
             if event.key not in [pygame.K_z, pygame.K_x]:
-                Timer(5 / kevent[1], pygame.time.set_timer, kevent).start()
+                Timer(kevent[1] / 1000, pygame.time.set_timer, (kevent[0], 1000 // kevent[1])).start()
 
-    def draw(self):
-        draw.clear(self.ctx, (238, 238, 238))
+    def draw(self, ctx, interpolation):
+        draw.clear(ctx, (238, 238, 238))
 
-        for (x, y) in self.ctx.board.shape.coords:
+        for (x, y) in ctx.board.shape.coords:
             draw.rect(
-                self.ctx,
-                colors[self.ctx.board.shape.shape],
+                ctx,
+                colors[ctx.board.shape.shape],
                 self.block.move(
-                    (x + self.ctx.board.shape.x) * self.block.width,
-                    (y + self.ctx.board.shape.y) * self.block.height))
+                    (x + ctx.board.shape.x) * self.block.width,
+                    (y + ctx.board.shape.y) * self.block.height))
 
-        for y in range(self.ctx.board.BOARD_H):
-            for x in range(self.ctx.board.BOARD_W):
-                if (shape := self.ctx.board.get_shape(x, y)) is not None:
+        for y in range(ctx.board.BOARD_H):
+            for x in range(ctx.board.BOARD_W):
+                if (shape := ctx.board.get_shape(x, y)) is not None:
                     draw.rect(
-                        self.ctx,
+                        ctx,
                         colors[shape],
                         self.block.move(x * self.block.width, y * self.block.height))
 
                 draw.rect(
-                    self.ctx,
+                    ctx,
                     (202, 202, 202),
                     self.block.move(x * self.block.width, y * self.block.height), 1)
 
-        draw.rect(self.ctx, (0, 0, 0), (200, 20, 200, 480), 3)
-        draw.rect(self.ctx, (0, 0, 0), (430, 20, 140,  30), 3)
-        self.ctx.mfont.render_to(
-            self.ctx.screen, (465, 31),
-            f'Score: {self.ctx.board.score}', (0, 0, 0))
+        draw.rect(ctx, (0, 0, 0), (200, 20, 200, 480), 3)
+        draw.rect(ctx, (0, 0, 0), (430, 20, 140,  30), 3)
+        ctx.mfont.render_to(
+            ctx.screen, (465, 31),
+            f'Score: {ctx.board.score}', (0, 0, 0))

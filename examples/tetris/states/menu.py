@@ -14,5 +14,12 @@ class Menu(State):
     def handle_mousebuttondown_event(self, event):
         return trans.SET(states.GameState)
 
-    def draw(self):
-        draw.clear(self.ctx, (255, 255 * (not getattr(self.ctx, 'paused', 0)), 255))
+    def draw(self, ctx, interpolation):
+        if not getattr(ctx, 'paused', False):
+            return draw.clear(self.ctx, (255, 255, 255))
+
+        ctx.state_manager.states[-2].draw(ctx, interpolation)
+        draw.rect(ctx, (0, 0, 0), (430, 60, 140,  30), 3)
+        ctx.mfont.render_to(
+            ctx.screen, (465, 71),
+            ' Paused', (0, 0, 0))

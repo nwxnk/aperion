@@ -11,12 +11,13 @@ class PausedState(State):
 
         return trans.NONE()
 
-    def draw(self):
-        draw.clear(self.ctx, (255, 255, 255))
-        draw.rect(self.ctx, (0, 0, 0), self.ctx.rect)
+    def draw(self, ctx, interpolation):
+        draw.clear(ctx, (255, 255, 255))
+        draw.rect(ctx, (0, 0, 0), self.ctx.rect)
 
 class MainState(State):
     def on_start(self):
+        self.ctx.pos  = [0, 0]
         self.ctx.rect = pygame.Rect(0, 0, 10, 10)
 
     def handle_keydown_event(self, event):
@@ -26,24 +27,23 @@ class MainState(State):
             pygame.K_ESCAPE: trans.POP()
         }.get(event.key, trans.NONE())
 
-    def update(self):
-        _ctx = self.ctx
-        rect = _ctx.rect
-    
-        if rect.x > _ctx.config['size'][0]:
-            rect.move_ip(-400, -400)
+    def update(self, ctx, dt):
+        if ctx.rect.x > ctx.config['size'][0]:
+            ctx.pos = [0, 0]
 
-        rect.move_ip(1, 1)
+        ctx.pos[0] += 100 * dt
+        ctx.pos[1] += 100 * dt
+        ctx.rect.update(ctx.pos, (10, 10))
 
-    def draw(self):
-        draw.clear(self.ctx, (0, 0, 0))
-        draw.rect(self.ctx, (255, 255, 255), self.ctx.rect)
+    def draw(self, ctx, interpolation):
+        draw.clear(ctx, (0, 0, 0))
+        draw.rect(ctx, (255, 255, 255), ctx.rect)
 
 if __name__ == '__main__':
-    ContextBuilder('test', 400, 400) \
-        .icon(pygame.Surface((1, 1))) \
+    ContextBuilder('?', 400, 400) \
         .grab_mouse(False) \
         .resizable(True) \
+        .step(120) \
         .fps(75) \
         .build() \
         .run(MainState)
