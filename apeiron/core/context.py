@@ -11,7 +11,8 @@ def call_func(obj, name, *a, **k):
     return getattr(obj, name, lambda *a, **k: None)(*a, **k)
 
 class ContextBuilder:
-    def __init__(self, title, width, height):
+    def __init__(self, title, *sargs): #size args, changed it so that width and height can be passed either one by one or in a tuple 
+
         self.config = {
             'fps'       : 0,
             'step'      : 60,
@@ -22,7 +23,7 @@ class ContextBuilder:
             'resizable' : False,
             'fullscreen': False,
             'grab_mouse': False,
-            'size'      : (width, height)}
+            'size'      : tuple(sargs) if len(sargs) > 1 else sargs[0]}
 
     def __str__(self):
         return str(self.config)
